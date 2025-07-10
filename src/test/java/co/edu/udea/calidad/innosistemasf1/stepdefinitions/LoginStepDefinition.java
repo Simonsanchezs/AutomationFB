@@ -10,24 +10,20 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import net.serenitybdd.annotations.Managed;
+import net.serenitybdd.screenplay.Actor;
 import net.serenitybdd.screenplay.abilities.BrowseTheWeb;
 import net.serenitybdd.screenplay.actors.OnStage;
 import net.serenitybdd.screenplay.actors.OnlineCast;
-
 import org.openqa.selenium.WebDriver;
 
-// Imports para la espera
 import net.serenitybdd.screenplay.waits.WaitUntil;
 import static net.serenitybdd.screenplay.matchers.WebElementStateMatchers.isVisible;
 import java.time.Duration;
 
-
 import co.edu.udea.calidad.innosistemasf1.userinterfaces.LoginPage;
-
 
 import static net.serenitybdd.screenplay.GivenWhenThen.seeThat;
 import static net.serenitybdd.screenplay.actors.OnStage.theActorCalled;
-import static net.serenitybdd.screenplay.actors.OnStage.theActorInTheSpotlight;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
@@ -37,27 +33,31 @@ public class LoginStepDefinition {
     @Managed(driver = "chrome")
     WebDriver hisBrowser;
 
+    private Actor estudiante;
+
     @Before
     public void setupActor() {
         OnStage.setTheStage(new OnlineCast());
-        theActorCalled("Estudiante").can(BrowseTheWeb.with(hisBrowser));
+        // definimos  al actor y le damos la habilidad de navegar
+        estudiante = theActorCalled("Estudiante").can(BrowseTheWeb.with(hisBrowser));
     }
-
-    // --- Escenario: Inicio de sesión exitoso ---
 
     @Given("el estudiante se encuentra en la página de login de InnoSistemas UdeA")
     public void elEstudianteSeEncuentraEnLaPaginaDeLoginDeInnoSistemasUdeA() {
-        theActorInTheSpotlight().attemptsTo(NavigateToLogin.fromLandingPage("http://localhost:3000/"));
+        // El actor 'estudiante' intenta navegar a la página de login
+        estudiante.attemptsTo(NavigateToLogin.fromLandingPage("http://localhost:3000/"));
     }
 
     @When("ingresa su correo {string} y contraseña {string} correctos")
     public void ingresaSuCorreoYContrasenaCorrectos(String email, String password) {
-        theActorInTheSpotlight().attemptsTo(LoginUser.with(email, password));
+        // El actor 'estudiante' intenta iniciar sesión con las credenciales dadas
+        estudiante.attemptsTo(LoginUser.with(email, password));
     }
 
     @Then("el sistema permite el acceso al {string}")
     public void elSistemaPermiteElAccesoAlDashboard(String expectedDashboardIdentifier) {
-        theActorInTheSpotlight().should(
+        // El actor 'estudiante' debería verificar que el login fue exitoso
+        estudiante.should(
                 seeThat(TheLogin.wasSuccessful(), is(true))
         );
     }
@@ -67,20 +67,20 @@ public class LoginStepDefinition {
 
     }
 
-    // --- Escenario: Inicio de sesión con credenciales incorrectas ---
-
     @When("ingresa su correo {string} y contraseña {string}")
     public void ingresaSuCorreoYContrasena(String email, String password) {
-        theActorInTheSpotlight().attemptsTo(LoginUser.with(email, password));
+        // El actor 'estudiante' intenta iniciar sesión con las credenciales (que serán incorrectas)
+        estudiante.attemptsTo(LoginUser.with(email, password));
     }
 
     @Then("el sistema muestra un mensaje de error indicando {string}")
     public void elSistemaMuestraUnMensajeDeErrorIndicando(String expectedErrorMessage) {
-        theActorInTheSpotlight().attemptsTo(
-                // ESPERA a 10 segundos
+        // El actor 'estudiante' primero espera a que el mensaje de error sea visible
+        estudiante.attemptsTo(
                 WaitUntil.the(LoginPage.MENSAJE_ERROR_CREDENCIALES, isVisible()).forNoMoreThan(Duration.ofSeconds(10))
         );
-        theActorInTheSpotlight().should(
+        // Luego, el actor 'estudiante' debería verificar que el mensaje de error es visible y contiene el texto esperado
+        estudiante.should(
                 seeThat(TheErrorMessage.isVisible(), is(true)),
                 seeThat(TheErrorMessage.displayed(), containsString(expectedErrorMessage))
         );
